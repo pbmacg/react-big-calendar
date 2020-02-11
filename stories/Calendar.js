@@ -207,3 +207,66 @@ storiesOf('Big Calendar', module)
       />
     )
   })
+  .add('Infinite scroll', () => {
+    const Provider = ({ children, ...props }) => {
+      const [calendars, setCalendars] = React.useState([
+        {
+          id: '1',
+          events: [...events.slice(0, 2)],
+        },
+        {
+          id: '2',
+          events: [...events.slice(0, 3)],
+        },
+        {
+          id: '3',
+          events: [...events.slice(0, 1)],
+        },
+        {
+          id: '4',
+          events: [...events.slice(0, 4)],
+        },
+        {
+          id: '5',
+          events: [...events],
+        },
+        {
+          id: '6',
+          events: [...events.slice(-2)],
+        },
+      ])
+      return <div>{children(calendars, setCalendars)}</div>
+    }
+
+    return (
+      <Provider>
+        {(calendars, setCalendars) => (
+          <div style={{ height: '100vh' }}>
+            <Calendar
+              defaultView={Views.MONTH}
+              events={events}
+              infiniteScroll={true}
+              calendars={calendars}
+              loadMore={() => {
+                setCalendars([
+                  ...calendars,
+                  ...[
+                    {
+                      id: Math.random().toString(36),
+                      events: [
+                        ...events.slice(
+                          0,
+                          Math.random() * (events.length - 2) + 2
+                        ),
+                      ],
+                    },
+                  ],
+                ])
+              }}
+              height
+            />
+          </div>
+        )}
+      </Provider>
+    )
+  })

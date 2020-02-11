@@ -137,6 +137,9 @@
     "memoize-one": "^4.0.3",
     "prop-types": "^15.6.2",
     "react-overlays": "^2.0.0-0",
+    "react-virtualized-auto-sizer": "^1.0.2",
+    "react-window": "^1.8.5",
+    "react-window-infinite-loader": "^1.0.5",
     "uncontrollable": "^7.0.0"
   },
   "resolutions": {

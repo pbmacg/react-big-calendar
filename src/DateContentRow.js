@@ -16,6 +16,7 @@ class DateContentRow extends React.Component {
     super(...args)
 
     this.slotMetrics = DateSlotMetrics.getSlotMetrics()
+    this.scrollTriggers = []
   }
 
   handleSelectSlot = slot => {
@@ -92,6 +93,40 @@ class DateContentRow extends React.Component {
     )
   }
 
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.renderForMeasure &&
+      !this.props.renderForMeasure &&
+      this.props.index === 1
+    ) {
+      this.observer = new IntersectionObserver(
+        entry => {
+          if (entry[0].intersectionRatio > 0) {
+            this.props.onScrollTrigger(this.props.viewIndex)
+          }
+        },
+        {
+          root: document.getElementsByClassName('rbc-calendar')[0],
+          rootMargin: '0px',
+          threshold: 1.0,
+        }
+      )
+
+      //console.log('moumnt', this.scrollTriggers)
+      const triggers = document.querySelectorAll('.rbc-infinite-scroll-trigger')
+
+      if (this.scrollTriggers.length) {
+        this.observer.observe(this.scrollTriggers[0])
+      }
+    }
+  }
+
+  componentDidMount() {}
+
+  componentWillUnmount() {
+    this.observer = null
+  }
+
   render() {
     const {
       date,
@@ -116,6 +151,7 @@ class DateContentRow extends React.Component {
       resourceId,
       longPressThreshold,
       isAllDay,
+      index,
     } = this.props
 
     if (renderForMeasure) return this.renderDummy()
@@ -139,6 +175,11 @@ class DateContentRow extends React.Component {
 
     return (
       <div className={className}>
+        <div
+          data-active={index === 1}
+          className="rbc-infinite-scroll-trigger"
+          ref={node => index === 1 && this.scrollTriggers.push(node)}
+        />
         <BackgroundCells
           date={date}
           getNow={getNow}

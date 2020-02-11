@@ -24,6 +24,8 @@ import defaults from 'lodash/defaults'
 import transform from 'lodash/transform'
 import mapValues from 'lodash/mapValues'
 import { wrapAccessor } from './utils/accessors'
+import { FixedSizeList as List } from 'react-window'
+import AutoSizer from 'react-virtualized-auto-sizer'
 
 function viewNames(_views) {
   return !Array.isArray(_views) ? Object.keys(_views) : _views
@@ -760,6 +762,7 @@ class Calendar extends React.Component {
     this.state = {
       context: this.getContext(this.props),
     }
+    this.listRef = React.createRef()
   }
   UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({ context: this.getContext(nextProps) })
@@ -851,6 +854,16 @@ class Calendar extends React.Component {
     return getDrilldownView(date, view, Object.keys(this.getViews()))
   }
 
+  componentDidMount() {
+    setTimeout(() => {
+      this.listRef.current.scrollToItem(3)
+    }, 500)
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log('updated', this.props)
+  }
+
   render() {
     let {
       view,
@@ -868,6 +881,8 @@ class Calendar extends React.Component {
       formats: _1,
       messages: _2,
       culture: _3,
+      infiniteScroll,
+      calendars,
       ...props
     } = this.props
 
@@ -884,6 +899,51 @@ class Calendar extends React.Component {
 
     let CalToolbar = components.toolbar || Toolbar
     const label = View.title(current, { localizer, length })
+
+    const loadMore = index => {
+      //console.log('loadmore', this.props.calendars.length - index)
+      if (this.props.calendars.length - index == 1) {
+        /*this.setState({
+          calendars: [...this.props.calendars, { id: Math.random().toString(36) }]
+        })*/
+        this.props.loadMore()
+      } else if (
+        this.props.calendars.length - index ==
+        this.props.calendars.length
+      ) {
+        // TODO: some kind of pull down to load previous
+      }
+    }
+
+    const Row = ({ index, style }) => {
+      return (
+        <div style={style}>
+          <View
+            {...props}
+            events={calendars[index].events}
+            date={current}
+            getNow={getNow}
+            length={length}
+            localizer={localizer}
+            getters={getters}
+            components={components}
+            accessors={accessors}
+            showMultiDayTimes={showMultiDayTimes}
+            getDrilldownView={this.getDrilldownView}
+            onNavigate={this.handleNavigate}
+            onDrillDown={this.handleDrillDown}
+            onSelectEvent={this.handleSelectEvent}
+            onDoubleClickEvent={this.handleDoubleClickEvent}
+            onSelectSlot={this.handleSelectSlot}
+            onShowMore={onShowMore}
+            viewIndex={index}
+            loadMore={loadMore}
+            key={this.props.calendars[index].id}
+            calendarId={this.props.calendars[index].id}
+          />
+        </div>
+      )
+    }
 
     return (
       <div
@@ -902,25 +962,22 @@ class Calendar extends React.Component {
             localizer={localizer}
           />
         )}
-        <View
-          {...props}
-          events={events}
-          date={current}
-          getNow={getNow}
-          length={length}
-          localizer={localizer}
-          getters={getters}
-          components={components}
-          accessors={accessors}
-          showMultiDayTimes={showMultiDayTimes}
-          getDrilldownView={this.getDrilldownView}
-          onNavigate={this.handleNavigate}
-          onDrillDown={this.handleDrillDown}
-          onSelectEvent={this.handleSelectEvent}
-          onDoubleClickEvent={this.handleDoubleClickEvent}
-          onSelectSlot={this.handleSelectSlot}
-          onShowMore={onShowMore}
-        />
+
+        <AutoSizer>
+          {({ width, height }) => (
+            <List
+              className="window-list"
+              ref={this.listRef}
+              height={height}
+              itemCount={this.props.calendars.length}
+              itemSize={height}
+              width={width}
+              scrollDirection="backward"
+            >
+              {Row}
+            </List>
+          )}
+        </AutoSizer>
       </div>
     )
   }
